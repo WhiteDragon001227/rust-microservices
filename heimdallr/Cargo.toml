@@ -1,0 +1,23 @@
+[package]
+name = "heimdallr"
+version = "0.1.0"
+authors = ["Nate Strandberg <nate@juliabalfour.com>"]
+edition = "2018"
+
+[dependencies]
+uuid   = { version = "0.6", features = ["serde", "v4"] }
+diesel = { version = "1.4.1", features = ["postgres", "r2d2", "serde_json", "uuid", "chrono"] }
+serde  = { version = "1.0.87", features = ["derive"] }
+argonautica = "0.1.5"
+serde_json  = "1.0.38"
+serde_yaml  = "0.8.8"
+clap        = "2.32.0"
+config      = "0.9.2"
+failure     = "0.1.5"
+actix       = "0.7.9"
+actix-web   = "0.7.18"
+chrono      = "0.4.6"
+r2d2        = "0.8.3"
+log         = "0.4.6"
+validator   = "0.8.0"
+validator_derive = "0.8.0"
