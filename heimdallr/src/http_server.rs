@@ -1,22 +1,30 @@
+mod create_user;
+
 use openssl::ssl::{SslMethod, SslAcceptor, SslAcceptorBuilder, SslFiletype};
 
 use actix::{prelude::*, SystemRunner};
 use actix_web::{
   middleware::{self, cors::Cors},
-  http::header::{CONTENT_TYPE},
-  server, App
+  http::{self, header::CONTENT_TYPE},
+  error::Error,
+  server, App, HttpRequest, HttpResponse
 };
 
 use failure::Fallible;
+use futures::Future;
 
 use crate::settings::{Settings, TLSConfig};
 use crate::db::Database;
 
+/// Default async HTTP response
+pub type FutureResponse = Box<Future<Item = HttpResponse, Error = Error>>;
+
 /// Contains the application state which gets passed around to each handler.
-pub struct AppState<T>
-  where T: Actor {
-  pub database: Addr<T>
+pub struct AppState {
+  pub database: Addr<Database>
 }
+
+pub type RequestWithState = HttpRequest<AppState>;
 
 /// HTTP Server object.
 pub struct Server {
@@ -44,6 +52,9 @@ impl Server {
             .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
             .allowed_header(CONTENT_TYPE)
             .max_age(3600)
+            .resource("/users/create", |req| {
+              req.method(http::Method::POST).f(create_user::handler)
+            })
             .register()
         })
     });
