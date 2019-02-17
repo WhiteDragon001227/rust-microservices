@@ -70,3 +70,55 @@ impl Handler<CreateUser> for super::Database {
     )
   }
 }
+
+
+
+#[derive(Validate, Serialize, Deserialize, Debug)]
+pub struct UserLogin {
+#[validate(email(message = "Email %s is not valid."))]
+  pub email: String,
+  pub password: String
+}
+
+impl Message for UserLogin {
+  type Result = Fallible<String>;
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct JwtClaims {
+  sub: String,
+  iat: i64,
+  exp: i64
+}
+
+/// Implements a handler for creating new users in the database.
+impl Handler<UserLogin> for super::Database {
+  type Result = Fallible<String>;
+
+  fn handle(&mut self, msg: UserLogin, _: &mut Self::Context) -> Self::Result {
+    use jsonwebtoken::{encode, Header, Algorithm};
+    use super::schema::users::dsl::*;
+    use chrono::prelude::*;
+    use crate::password;
+
+    // Grab a connection from the pool
+    let connection = self.pool.get()?;
+
+    let user = users.filter(email.eq(&msg.email)).first::<User>(&connection)?;
+    if !password::verify(msg.password, user.password_digest)? {
+      //return Err(UserLoginError::BadUsernameOrPassword);
+    }
+
+    let mut header = Header::default();
+    header.alg = Algorithm::HS512;
+
+    let expiration = Utc::now();
+    let payload = JwtClaims {
+      sub: user.uuid.to_string(),
+      iat: expiration.timestamp(),
+      exp: expiration.timestamp() + 3600
+    };
+
+    Ok(encode(&header, &payload, "supercalifragilisticexpialidocious".as_ref())?)
+  }
+}

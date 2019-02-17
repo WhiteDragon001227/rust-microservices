@@ -1,4 +1,5 @@
 mod create_user;
+mod user_login;
 
 use openssl::ssl::{SslMethod, SslAcceptor, SslAcceptorBuilder, SslFiletype};
 
@@ -47,6 +48,9 @@ impl Server {
             .max_age(3600)
             .resource("/users/create", |r| {
               r.method(Method::POST).with_async(create_user::handler)
+            })
+            .resource("/users/login", |r| {
+              r.method(Method::POST).with_async(user_login::handler)
             })
             .register()
         })

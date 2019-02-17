@@ -1,8 +1,8 @@
 mod schema;
 pub use schema::*;
 
-mod users;
-pub use users::*;
+mod models;
+pub use models::*;
 
 use crate::settings::Settings;
 
