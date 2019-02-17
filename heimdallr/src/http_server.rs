@@ -5,7 +5,7 @@ use openssl::ssl::{SslMethod, SslAcceptor, SslAcceptorBuilder, SslFiletype};
 use actix::{prelude::*, SystemRunner};
 use actix_web::{
   middleware::{self, cors::Cors},
-  http::{self, header::CONTENT_TYPE},
+  http::{Method, header::CONTENT_TYPE},
   error::Error,
   server, App, HttpRequest, HttpResponse
 };
@@ -52,8 +52,8 @@ impl Server {
             .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
             .allowed_header(CONTENT_TYPE)
             .max_age(3600)
-            .resource("/users/create", |req| {
-              req.method(http::Method::POST).f(create_user::handler)
+            .resource("/users/create", |r| {
+              r.method(Method::POST).a(create_user::handler)
             })
             .register()
         })

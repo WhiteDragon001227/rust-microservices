@@ -1,13 +1,13 @@
-use actix_web::{Json, AsyncResponder, HttpResponse};
+use actix_web::{Json, Error, State, AsyncResponder, HttpResponse};
 
-use futures::future::{Future, result};
+use futures::future::{Future};
 
 use crate::http_server::{RequestWithState, FutureResponse};
 use crate::db::CreateUser;
 
-pub fn handler<'a>((data, request): (Json<CreateUser<'a>>, &RequestWithState)) -> FutureResponse {
+// pub fn handler<'a>((data, state): (Json<CreateUser<'a>>, State<AppState>)) -> impl Future<Item = HttpResponse, Error = Error> {
+pub fn handler<'a>(request: &RequestWithState) -> FutureResponse {
 
-  // state.database.send(data).from_err().and_then(|| Ok(HttpResponse::Ok())).responder()
   request
     .state()
     .database

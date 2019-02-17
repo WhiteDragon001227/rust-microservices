@@ -5,6 +5,7 @@ use diesel::prelude::*;
 use chrono::prelude::*;
 use failure::{Fallible, format_err};
 use validator::Validate;
+use serde::{Serialize, Deserialize};
 
 #[derive(Queryable, Debug)]
 pub struct User {
@@ -24,7 +25,7 @@ pub struct NewUser<'a> {
 }
 
 /// Used to create a new user in the database.
-#[derive(Validate, Debug)]
+#[derive(Validate, Serialize, Deserialize, Debug)]
 pub struct CreateUser<'a> {
   #[validate(email(message = "Email %s is not valid."))]
   pub email: &'a str,
