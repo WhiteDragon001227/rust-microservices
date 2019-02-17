@@ -1,20 +1,29 @@
-use actix_web::{Json, Error, State, AsyncResponder, HttpResponse};
+use actix_web::{AsyncResponder, HttpResponse, State, FutureResponse, Json};
+use futures::future::Future;
+use serde::Serialize;
 
-use futures::future::{Future};
+use crate::{http_server::AppState, db::CreateUser};
 
-use crate::http_server::{RequestWithState, FutureResponse};
-use crate::db::CreateUser;
+/// TODO: Temporary struct for testing
+#[derive(Serialize)]
+pub struct EpicFailure {
+  pub error: bool,
+  pub reason: String
+}
 
-// pub fn handler<'a>((data, state): (Json<CreateUser<'a>>, State<AppState>)) -> impl Future<Item = HttpResponse, Error = Error> {
-pub fn handler<'a>(request: &RequestWithState) -> FutureResponse {
-
-  request
-    .state()
+/// HTTP handler for creating new users.
+/// 
+/// # Arguments
+/// * `data`  - JSON payload.
+/// * `state` - Application state (database pool, etc)
+pub fn handler(data: Json<CreateUser>, state: State<AppState>) -> FutureResponse<HttpResponse> {
+  state
     .database
-    .send(CreateUser{ email: "nater540@gmail.com", password: "magical1" })
-    // .send(data.into_inner())
+    .send(data.into_inner())
     .from_err()
-    .and_then(|result| {
-      Ok(HttpResponse::Ok().body("hello world"))
+    .and_then(|res| match res {
+      Ok(user)   => Ok(HttpResponse::Ok().json(user)),
+      // TODO: This isn't the correct way to handle errors, but it works for now...
+      Err(error) => Ok(HttpResponse::Ok().json(EpicFailure{ error: true, reason: error.as_fail().to_string() }))
   }).responder()
 }

@@ -4,10 +4,10 @@ use actix::prelude::*;
 use diesel::prelude::*;
 use chrono::prelude::*;
 use failure::{Fallible, format_err};
-use validator::Validate;
 use serde::{Serialize, Deserialize};
+use validator::Validate;
 
-#[derive(Queryable, Debug)]
+#[derive(Queryable, Serialize, Debug)]
 pub struct User {
   pub id: i32,
   pub uuid: uuid::Uuid,
@@ -26,20 +26,20 @@ pub struct NewUser<'a> {
 
 /// Used to create a new user in the database.
 #[derive(Validate, Serialize, Deserialize, Debug)]
-pub struct CreateUser<'a> {
+pub struct CreateUser {
   #[validate(email(message = "Email %s is not valid."))]
-  pub email: &'a str,
+  pub email: String,
 
   #[validate(length(min = "4"))]
-  pub password: &'a str
+  pub password: String
 }
 
-impl<'a> Message for CreateUser<'a> {
+impl Message for CreateUser {
   type Result = Fallible<User>;
 }
 
 /// Implements a handler for creating new users in the database.
-impl<'a> Handler<CreateUser<'a>> for super::Database {
+impl Handler<CreateUser> for super::Database {
   type Result = Fallible<User>;
 
   fn handle(&mut self, msg: CreateUser, _: &mut Self::Context) -> Self::Result {
@@ -52,7 +52,7 @@ impl<'a> Handler<CreateUser<'a>> for super::Database {
 
     // Check if the user already exists
     match select(
-      exists(users.filter(email.eq(msg.email)))
+      exists(users.filter(email.eq(&msg.email)))
     ).get_result::<bool>(&connection) {
       Ok(true) => { return Err(format_err!("User with this email address already exists.")) },
       _ => {}
@@ -60,7 +60,7 @@ impl<'a> Handler<CreateUser<'a>> for super::Database {
 
     // Create a new user to insert into the database
     let new_user = NewUser {
-      email: msg.email,
+      email: &msg.email,
       password_digest: &password::hash(msg.password)?
     };
 

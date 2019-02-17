@@ -6,25 +6,18 @@ use actix::{prelude::*, SystemRunner};
 use actix_web::{
   middleware::{self, cors::Cors},
   http::{Method, header::CONTENT_TYPE},
-  error::Error,
-  server, App, HttpRequest, HttpResponse
+  App, server
 };
 
 use failure::Fallible;
-use futures::Future;
 
 use crate::settings::{Settings, TLSConfig};
 use crate::db::Database;
-
-/// Default async HTTP response
-pub type FutureResponse = Box<Future<Item = HttpResponse, Error = Error>>;
 
 /// Contains the application state which gets passed around to each handler.
 pub struct AppState {
   pub database: Addr<Database>
 }
-
-pub type RequestWithState = HttpRequest<AppState>;
 
 /// HTTP Server object.
 pub struct Server {
@@ -53,7 +46,7 @@ impl Server {
             .allowed_header(CONTENT_TYPE)
             .max_age(3600)
             .resource("/users/create", |r| {
-              r.method(Method::POST).a(create_user::handler)
+              r.method(Method::POST).with_async(create_user::handler)
             })
             .register()
         })
@@ -69,9 +62,7 @@ impl Server {
       server.bind(&settings.inbound_listener.address)?.start();
     }
 
-    Ok(Server {
-      runner
-    })
+    Ok(Server{ runner })
   }
 
   /// Starts the HTTP server.

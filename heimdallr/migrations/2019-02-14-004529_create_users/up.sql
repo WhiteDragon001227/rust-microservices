@@ -4,7 +4,7 @@ CREATE TABLE users (
   email character varying NOT NULL,
   password_digest character varying DEFAULT ''::character varying NOT NULL,
   created_at timestamp without time zone NOT NULL DEFAULT NOW(),
-  updated_at timestamp without time zone NOT NULL
+  updated_at timestamp without time zone NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX index_users_uuid ON users USING btree(uuid);
